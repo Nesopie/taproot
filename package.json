@@ -15,6 +15,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@catalogfi/wallets": "^0.2.28",
     "bitcoinjs-lib": "^6.1.5",
     "ecpair": "^2.1.0",
     "tiny-secp256k1": "^2.2.3"

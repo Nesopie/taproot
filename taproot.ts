@@ -4,6 +4,9 @@ import { createHashlock, createTimelock } from "./script";
 import * as ecc from "tiny-secp256k1";
 import { fromBech32 } from "bitcoinjs-lib/src/address";
 import * as bitcoin from "bitcoinjs-lib";
+import ECPairFactory from "ecpair";
+
+const ECPair = ECPairFactory(ecc);
 
 export const serializeScript = (script: Buffer) => {
     return Buffer.concat([
@@ -59,6 +62,8 @@ export const generateExternalKey = (
 
     const mastRoot = createTapTree([...hashlockScipts, timelockScript])[0];
 
+    console.log("1 mast root", mastRoot);
+
     const evmAddressHash = sha256(
         Buffer.from(
             evmAddress.startsWith("0x") ? evmAddress.slice(2) : evmAddress,
@@ -66,7 +71,7 @@ export const generateExternalKey = (
         )
     );
 
-    const internalPubKey = ecc.xOnlyPointFromScalar(evmAddressHash);
+    let internalPubKey = evmAddressHash;
 
     const tweak = taggedHash(
         TAP_TWEAK,
@@ -75,7 +80,7 @@ export const generateExternalKey = (
 
     const tweakedPubKey = ecc.xOnlyPointAddTweak(internalPubKey, tweak);
 
-    return tweakedPubKey;
+    return { tweakedPubKey, internalPubKey };
 };
 
 export const generateMerkleProof = (scripts: Buffer[], index: number) => {
@@ -128,26 +133,33 @@ export const computeMerkleProof = (leaf: Buffer, merkleProof: Buffer[]) => {
     return proofHash;
 };
 
-const enablerAddress = "bc1q6ngglezrappslwz526z5vja42t8fg3tz3qyc4k";
-const enabler = fromBech32(enablerAddress).data;
+// const enablerAddress = "bc1q6ngglezrappslwz526z5vja42t8fg3tz3qyc4k";
+// const enabler = fromBech32(enablerAddress).data;
 
-const secret = sha256(Buffer.from("secret", "utf8"));
-const secretHash = sha256(secret);
+// const secret = sha256(Buffer.from("secret", "utf8"));
+// const secretHash = sha256(secret);
 
-const hashlock = createHashlock(secretHash, enabler);
-const timelock = createTimelock(bitcoin.script.number.encode(2), enabler);
+// const evmAddress = "f39Fd6e51aad88F6F4ce6aB8827279cffFb92266".toLowerCase();
 
-const script = [...Array(1600)].map(() => hashlock);
+// const externalPubKey = generateExternalKey(
+//     evmAddress,
+//     enabler,
+//     [enabler],
+//     [secretHash],
+//     bitcoin.script.number.encode(2)
+// );
 
-const taptree = createTapTree([...script, timelock]);
+// const script = [...Array(1600)].map(() => hashlock);
 
-console.log("root", taptree[0]);
+// const taptree = createTapTree([...script, timelock]);
 
-const merkleProof = generateMerkleProof([...script, timelock], 12);
+// console.log("root", taptree[0]);
 
-console.log(merkleProof.length);
+// const merkleProof = generateMerkleProof([...script, timelock], 12);
 
-console.log(
-    "root from merkle proof",
-    computeMerkleProof(serializeScript(hashlock), merkleProof)
-);
+// console.log(merkleProof.length);
+
+// console.log(
+//     "root from merkle proof",
+//     computeMerkleProof(serializeScript(hashlock), merkleProof)
+// );
